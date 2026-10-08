@@ -1,5 +1,5 @@
-import { useState } from "react";
-import bg_desktop_main from "../assets/bg-main-desktop.png";
+import { type ChangeEvent, type FormEvent, useState } from "react";
+
 type FormValues = {
   cardholderName: string;
   cardNumber: string;
@@ -7,14 +7,13 @@ type FormValues = {
   expYear: string;
   cvc: string;
 };
+
 type FormErrors = Partial<Record<keyof FormValues, string>>;
 
-const InitialFormValues: FormValues = {
-  cardholderName: "Jane Appleseed",
-  cardNumber: "0000 0000 0000 0000",
-  expMonth: "00",
-  expYear: "00",
-  cvc: "000",
+type FormComponentProps = {
+  formValues: FormValues;
+  setFormValues: React.Dispatch<React.SetStateAction<FormValues>>;
+  onSubmitSuccess: () => void;
 };
 const validateForm = (formValues: FormValues) => {
   const nextErrors: FormErrors = {};
@@ -57,10 +56,12 @@ const validateForm = (formValues: FormValues) => {
 
   return nextErrors;
 };
-const FormComponent = () => {
-  const [formValue, setFormValue] = useState<FormValues>(InitialFormValues);
+const FormComponent = ({
+  formValues,
+  setFormValues,
+  onSubmitSuccess,
+}: FormComponentProps) => {
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,7 +75,7 @@ const FormComponent = () => {
         .slice(0, 19);
     }
 
-    setFormValue((prev) => ({ ...prev, [name]: formattedValue }));
+    setFormValues((prev) => ({ ...prev, [name]: formattedValue }));
 
     if (errors[name as keyof FormValues]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -83,146 +84,126 @@ const FormComponent = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const validationErrors = validateForm(formValue);
+    const validationErrors = validateForm(formValues);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      setIsSubmitted(false);
-    } else {
-      setErrors({});
-      setIsSubmitted(true);
+      return;
     }
+
+    setErrors({});
+    onSubmitSuccess();
   };
 
   return (
-    <div className="flex flex-row items-center justify-center gap-y-14">
-      <img src={bg_desktop_main} alt="Background illustration" />
-
-      {isSubmitted ? (
-        <div className="flex flex-col items-center p-6 gap-4">
-          <h2 className="text-2xl font-bold uppercase tracking-widest">
-            Thank You!
-          </h2>
-          <p className="text-gray-500">We've added your card details.</p>
-          <button
-            onClick={() => {
-              setFormValue(InitialFormValues);
-              setIsSubmitted(false);
-            }}
-            className="w-full rounded-lg bg-[hsl(278,68%,11%)] text-white p-4"
-          >
-            Continue
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col p-6 gap-4 w-80">
-          {/* Cardholder Name */}
-          <label
-            htmlFor="cardholderName"
-            className="flex flex-col gap-1 text-xs font-semibold tracking-wider"
-          >
-            CARDHOLDER NAME
-            <input
-              type="text"
-              id="cardholderName"
-              name="cardholderName"
-              placeholder="e.g. Jane Appleseed"
-              value={formValue.cardholderName}
-              onChange={handleChange}
-              className={`border rounded-lg p-2 ${errors.cardholderName ? "border-red-500" : "border-gray-300"}`}
-            />
-          </label>
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-[380px] rounded-2xl bg-transparent p-2"
+    >
+      <div className="flex flex-col gap-5">
+        <label
+          htmlFor="cardholderName"
+          className="flex flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#21092f]"
+        >
+          Cardholder Name
+          <input
+            type="text"
+            id="cardholderName"
+            name="cardholderName"
+            placeholder="e.g. Jane Appleseed"
+            value={formValues.cardholderName}
+            onChange={handleChange}
+            className={`h-[52px] w-full rounded-[10px] border bg-white px-4 text-[1.05rem] text-[#21092f] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[rgba(33,9,47,0.5)] ${errors.cardholderName ? "border-[#ff5252] shadow-[0_0_0_3px_rgba(255,82,82,0.09)]" : "border-[#d5cfe1] focus:border-[#6448fe] focus:shadow-[0_0_0_3px_rgba(100,72,254,0.12)]"}`}
+          />
           {errors.cardholderName && (
-            <span className="text-red-500 text-xs">
+            <span className="text-xs text-[#ff5252]">
               {errors.cardholderName}
             </span>
           )}
+        </label>
 
-          {/* Card Number */}
-          <label
-            htmlFor="cardNumber"
-            className="flex flex-col gap-1 text-xs font-semibold tracking-wider"
-          >
-            CARD NUMBER
-            <input
-              type="text"
-              id="cardNumber"
-              inputMode="numeric"
-              name="cardNumber"
-              placeholder="e.g. 1234 5678 9123 0000"
-              value={formValue.cardNumber}
-              onChange={handleChange}
-              className={`border rounded-lg p-2 ${errors.cardNumber ? "border-red-500" : "border-gray-300"}`}
-            />
-          </label>
+        <label
+          htmlFor="cardNumber"
+          className="flex flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#21092f]"
+        >
+          Card Number
+          <input
+            type="text"
+            id="cardNumber"
+            inputMode="numeric"
+            name="cardNumber"
+            placeholder="e.g. 1234 5678 9123 0000"
+            value={formValues.cardNumber}
+            onChange={handleChange}
+            className={`h-[52px] w-full rounded-[10px] border bg-white px-4 text-[1.05rem] text-[#21092f] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[rgba(33,9,47,0.5)] ${errors.cardNumber ? "border-[#ff5252] shadow-[0_0_0_3px_rgba(255,82,82,0.09)]" : "border-[#d5cfe1] focus:border-[#6448fe] focus:shadow-[0_0_0_3px_rgba(100,72,254,0.12)]"}`}
+          />
           {errors.cardNumber && (
-            <span className="text-red-500 text-xs">{errors.cardNumber}</span>
+            <span className="text-xs text-[#ff5252]">{errors.cardNumber}</span>
           )}
+        </label>
 
-          {/* Expiry Date & CVC */}
-          <div className="flex flex-row gap-4">
-            <label className="flex flex-col gap-1 text-xs font-semibold tracking-wider flex-1">
-              EXP. DATE (MM/YY)
-              <div className="flex flex-row gap-2">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  name="expMonth"
-                  placeholder="MM"
-                  maxLength={2}
-                  value={formValue.expMonth}
-                  onChange={handleChange}
-                  className={`border rounded-lg p-2 w-1/2 ${errors.expMonth ? "border-red-500" : "border-gray-300"}`}
-                />
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  name="expYear"
-                  placeholder="YY"
-                  maxLength={2}
-                  value={formValue.expYear}
-                  onChange={handleChange}
-                  className={`border rounded-lg p-2 w-1/2 ${errors.expYear ? "border-red-500" : "border-gray-300"}`}
-                />
-              </div>
-              {(errors.expMonth || errors.expYear) && (
-                <span className="text-red-500 text-xs mt-1">
-                  {errors.expMonth || errors.expYear}
-                </span>
-              )}
-            </label>
-
-            <label
-              htmlFor="cvc"
-              className="flex flex-col gap-1 text-xs font-semibold tracking-wider flex-1"
-            >
-              CVC
+        <div className="grid grid-cols-[1.2fr_1fr] gap-4 max-[420px]:grid-cols-1">
+          <label className="flex min-w-0 flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#21092f]">
+            Exp. Date
+            <div className="grid grid-cols-2 gap-[10px]">
               <input
                 type="text"
-                id="cvc"
                 inputMode="numeric"
-                name="cvc"
-                placeholder="e.g. 123"
-                maxLength={3}
-                value={formValue.cvc}
+                name="expMonth"
+                placeholder="MM"
+                maxLength={2}
+                value={formValues.expMonth}
                 onChange={handleChange}
-                className={`border rounded-lg p-2 ${errors.cvc ? "border-red-500" : "border-gray-300"}`}
+                className={`h-[52px] w-full rounded-[10px] border bg-white px-3 text-[1.05rem] text-[#21092f] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[rgba(33,9,47,0.5)] ${errors.expMonth ? "border-[#ff5252] shadow-[0_0_0_3px_rgba(255,82,82,0.09)]" : "border-[#d5cfe1] focus:border-[#6448fe] focus:shadow-[0_0_0_3px_rgba(100,72,254,0.12)]"}`}
               />
-              {errors.cvc && (
-                <span className="text-red-500 text-xs mt-1">{errors.cvc}</span>
-              )}
-            </label>
-          </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                name="expYear"
+                placeholder="YY"
+                maxLength={2}
+                value={formValues.expYear}
+                onChange={handleChange}
+                className={`h-[52px] w-full rounded-[10px] border bg-white px-3 text-[1.05rem] text-[#21092f] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[rgba(33,9,47,0.5)] ${errors.expYear ? "border-[#ff5252] shadow-[0_0_0_3px_rgba(255,82,82,0.09)]" : "border-[#d5cfe1] focus:border-[#6448fe] focus:shadow-[0_0_0_3px_rgba(100,72,254,0.12)]"}`}
+              />
+            </div>
+            {(errors.expMonth || errors.expYear) && (
+              <span className="text-xs text-[#ff5252]">
+                {errors.expMonth || errors.expYear}
+              </span>
+            )}
+          </label>
 
-          <button
-            type="submit"
-            className="border rounded-lg bg-[hsl(278,68%,11%)] text-white p-4 mt-2 hover:opacity-90 transition-opacity"
+          <label
+            htmlFor="cvc"
+            className="flex min-w-0 flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#21092f]"
           >
-            Confirm
-          </button>
-        </form>
-      )}
-    </div>
+            CVC
+            <input
+              type="text"
+              id="cvc"
+              inputMode="numeric"
+              name="cvc"
+              placeholder="e.g. 123"
+              maxLength={3}
+              value={formValues.cvc}
+              onChange={handleChange}
+              className={`h-[52px] w-full rounded-[10px] border bg-white px-3 text-[1.05rem] text-[#21092f] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[rgba(33,9,47,0.5)] ${errors.cvc ? "border-[#ff5252] shadow-[0_0_0_3px_rgba(255,82,82,0.09)]" : "border-[#d5cfe1] focus:border-[#6448fe] focus:shadow-[0_0_0_3px_rgba(100,72,254,0.12)]"}`}
+            />
+            {errors.cvc && (
+              <span className="text-xs text-[#ff5252]">{errors.cvc}</span>
+            )}
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          className="mt-1 h-[52px] w-full cursor-pointer rounded-[10px] border-0 bg-[#21092f] text-base font-semibold text-white transition-[transform,opacity] duration-200 hover:-translate-y-px hover:opacity-[0.96]"
+        >
+          Confirm
+        </button>
+      </div>
+    </form>
   );
 };
 
